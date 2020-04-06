@@ -86,11 +86,6 @@ class AssetManager(models.Manager):
         # created = super().create(*args, **kwargs)
         update_parent_languages = kwargs.pop('update_parent_languages', True)
 
-        # ensure "jsonb" fields are mirrored until the migration is complete
-        for field in ['content', '_deployment_data', 'summary']:
-            if field in kwargs:
-                kwargs['{}_jsonb'.format(field)] = kwargs[field]
-
         created = self.model(**kwargs)
         self._for_write = True
         created.save(force_insert=True, using=self.db,
@@ -460,8 +455,8 @@ class Asset(ObjectPermissionMixin,
     name = models.CharField(max_length=255, blank=True, default='')
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
-    content = JSONField(null=True)
-    summary = JSONField(null=True, default=dict)
+    content = LazyDefaultJSONBField(default=dict)
+    summary = LazyDefaultJSONBField(default=dict)
     report_styles = JSONBField(default=dict)
     report_custom = JSONBField(default=dict)
     map_styles = LazyDefaultJSONBField(default=dict)
@@ -479,12 +474,7 @@ class Asset(ObjectPermissionMixin,
 
     # _deployment_data should be accessed through the `deployment` property
     # provided by `DeployableMixin`
-    _deployment_data = JSONField(default=dict)
-
-    # "jsonb" fields mirror json text fields until the migration is complete
-    summary_jsonb = LazyDefaultJSONBField(default=dict)
-    content_jsonb = LazyDefaultJSONBField(default=dict)
-    _deployment_data_jsonb = LazyDefaultJSONBField(default=dict)
+    _deployment_data = LazyDefaultJSONBField(default=dict)
 
     permissions = GenericRelation(ObjectPermission)
 
@@ -902,11 +892,6 @@ class Asset(ObjectPermissionMixin,
         self._populate_report_styles()
 
         _create_version = kwargs.pop('create_version', True)
-
-        # ensure "jsonb" fields are mirrored until the migration is complete
-        self.content_jsonb = self.content
-        self._deployment_data_jsonb = self._deployment_data
-        self.summary_jsonb = self.summary
 
         super().save(*args, **kwargs)
 
