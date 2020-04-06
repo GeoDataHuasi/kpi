@@ -138,6 +138,12 @@ def check_fields(check_count):
     check_queryset_fields_match(first_assets, maxn, note='first')
     check_queryset_fields_match(last_assets, maxn, note='last')
     check_queryset_fields_match(random_assets, maxn, note='random')
+    print('''
+    Parsing complete. {} records have been checked and for equality.
+    If this number is a significant portion of the dataset then it is now
+    safe to continue with kpi migration 0027 which removes asset.content and
+    renames the mirrored jsonb fields into their place.
+    '''.format(check_count * 3))
 
 
 def _deterministic_json_dump(obj):
@@ -151,7 +157,7 @@ class Command(BaseCommand):
             '--check',
             default=0,
             type=int,
-            help="Check table to see if jsonb fields match text fields",
+            help='Check table to see if jsonb fields match text fields',
         )
 
     def handle(self, *args, **options):

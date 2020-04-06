@@ -46,7 +46,7 @@ This command does not require downtime.
 
 
 SKIP_HEAVY_MIGRATIONS = settings.SKIP_HEAVY_MIGRATIONS
-SKIP_HEAVY_MIGRATIONS = True
+
 
 def forwards_func(apps, schema_editor):
     if SKIP_HEAVY_MIGRATIONS:
