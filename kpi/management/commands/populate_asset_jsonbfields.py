@@ -15,6 +15,10 @@ import json
 UPDATE_BATCH_COUNT = 1000
 DOTS_EVERY = 20
 
+#  >  python manage.py populate_asset_jsonbfields
+# will iterate through the kpi.asset table and copy all values of asset.content
+# over to asset.content_jsonb
+
 INFO = '''
 Backfilling jsonb fields of "kpi.Asset" for {} records.
 * content => content_jsonb
@@ -47,8 +51,6 @@ def _backfill(asset_query):
                   uid=asset_query.pop('uid'),
                   )
 
-    # TODO: ensure content_jsonb['schema'] is set to *something*
-
     has_change = False
     for field in TEXT_FIELDS:
         text = asset_query[field]
@@ -57,7 +59,6 @@ def _backfill(asset_query):
             has_change = True
     if not has_change:
         return None
-
     for field in TEXT_FIELDS:
         text = asset_query[field]
         val = {}
@@ -100,7 +101,61 @@ def populate_asset_jsonbfields():
         ])
         print(infostring)
 
+#  >  python manage.py populate_asset_jsonbfields --check=10
+# will run through the first 10, last 10, and a random 10 assets
+# and throw an error if jsonb fields do not match json text fields
+
+def check_queryset_fields_match(asset_qs, max_n, note=''):
+    query_fields = TEXT_FIELDS + JSONB_FIELDS + ['id', 'uid', 'date_created']
+    asset_qs_vals = asset_qs.values(*query_fields)
+    for asset in asset_qs_vals[0:max_n]:
+        test_fields_match(asset, note)
+
+
+def test_fields_match(asset, note):
+    sys.stdout.write(note[0])
+    sys.stdout.flush()
+    for field in TEXT_FIELDS:
+        field2 = '{}_jsonb'.format(field)
+        if asset[field] is None:
+            asset[field] = '{}'
+        v1 = _deterministic_json_dump(json.loads(asset[field]))
+        v2 = _deterministic_json_dump(asset[field2])
+        if v1 != v2:
+            raise ValueError('Asset(uid={}) jsonb and text fields'
+                             ' do not match for {}'.format(
+                                asset['uid'],
+                                field,
+                             ))
+
+
+def check_fields(check_count):
+    asset_count = Asset.objects.count()
+    maxn = check_count if (check_count < asset_count) else asset_count
+    first_assets = Asset.objects.order_by('date_created')
+    last_assets = Asset.objects.order_by('-date_created')
+    random_assets = Asset.objects.order_by('uid')
+    check_queryset_fields_match(first_assets, maxn, note='first')
+    check_queryset_fields_match(last_assets, maxn, note='last')
+    check_queryset_fields_match(random_assets, maxn, note='random')
+
+
+def _deterministic_json_dump(obj):
+    return json.dumps(obj, sort_keys=True)
+
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        super().add_arguments(parser)
+        parser.add_argument(
+            '--check',
+            default=0,
+            type=int,
+            help="Check table to see if jsonb fields match text fields",
+        )
+
     def handle(self, *args, **options):
-        populate_asset_jsonbfields()
+        if options['check'] > 0:
+            check_fields(options['check'])
+        else:
+            populate_asset_jsonbfields()
