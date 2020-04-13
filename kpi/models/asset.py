@@ -11,6 +11,8 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import JSONField as JSONBField
+from jsonfield import JSONField
+
 from django.db import models
 from django.db import transaction
 from django.db.models import Prefetch
@@ -464,6 +466,9 @@ class Asset(ObjectPermissionMixin,
     date_modified = models.DateTimeField(auto_now=True)
     content = JSONBField(null=True)
     summary = JSONBField(null=True, default=dict)
+    content_jsonb = LazyDefaultJSONBField(default=dict)
+    summary_jsonb = LazyDefaultJSONBField(default=dict)
+
     report_styles = JSONBField(default=dict)
     report_custom = JSONBField(default=dict)
     map_styles = LazyDefaultJSONBField(default=dict)
@@ -482,6 +487,7 @@ class Asset(ObjectPermissionMixin,
     # _deployment_data should be accessed through the `deployment` property
     # provided by `DeployableMixin`
     _deployment_data = JSONBField(default=dict)
+    _deployment_data_jsonb = LazyDefaultJSONBField(default=dict)
 
     permissions = GenericRelation(ObjectPermission)
 

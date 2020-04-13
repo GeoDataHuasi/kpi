@@ -17,21 +17,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name='asset',
-            name='_deployment_data',
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
-        ),
-        migrations.AlterField(
-            model_name='asset',
-            name='content',
-            field=django.contrib.postgres.fields.jsonb.JSONField(null=True),
-        ),
-        migrations.AlterField(
-            model_name='asset',
-            name='summary',
-            field=django.contrib.postgres.fields.jsonb.JSONField(default=dict, null=True),
-        ),
-        migrations.AlterField(
             model_name='assetsnapshot',
             name='details',
             field=django.contrib.postgres.fields.jsonb.JSONField(default=dict),
