@@ -85,9 +85,15 @@ class TaggableModelManager(models.Manager):
     def create(self, *args, **kwargs):
         tag_string = kwargs.pop('tag_string', None)
         created = super().create(*args, **kwargs)
+
+        self._post_init_migrate_jsonb()
+
         if tag_string:
             created.tag_string= tag_string
         return created
+
+    def _post_init_migrate_jsonb(self):
+        pass
 
 
 class KpiTaggableManager(_TaggableManager):
@@ -113,6 +119,11 @@ class AssetManager(TaggableModelManager):
     def filter_by_tag_name(self, tag_name):
         return self.filter(tags__name=tag_name)
 
+    def _post_init_migrate_jsonb(self):
+        # ensure "jsonb" fields are mirrored until the migration is complete
+        for field in ['content', '_deployment_data', 'summary']:
+            if field in kwargs:
+                kwargs['{}_jsonb'.format(field)] = kwargs[field]
 
 # TODO: Merge this functionality into the eventual common base class of `Asset`
 # and `Collection`.
@@ -857,6 +868,12 @@ class Asset(ObjectPermissionMixin,
         self._populate_report_styles()
 
         _create_version = kwargs.pop('create_version', True)
+
+        # ensure "jsonb" fields are mirrored until the migration is complete
+        self.content_jsonb = self.content
+        self._deployment_data_jsonb = self._deployment_data
+        self.summary_jsonb = self.summary
+
         super().save(*args, **kwargs)
 
         if _create_version:
