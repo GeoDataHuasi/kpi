@@ -475,8 +475,8 @@ class Asset(ObjectPermissionMixin,
     name = models.CharField(max_length=255, blank=True, default='')
     date_created = models.DateTimeField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
-    content = JSONBField(null=True)
-    summary = JSONBField(null=True, default=dict)
+    content = JSONField(null=True)
+    summary = JSONField(null=True, default=dict)
     content_jsonb = LazyDefaultJSONBField(default=dict)
     summary_jsonb = LazyDefaultJSONBField(default=dict)
 
@@ -497,7 +497,7 @@ class Asset(ObjectPermissionMixin,
 
     # _deployment_data should be accessed through the `deployment` property
     # provided by `DeployableMixin`
-    _deployment_data = JSONBField(default=dict)
+    _deployment_data = JSONField(default=dict)
     _deployment_data_jsonb = LazyDefaultJSONBField(default=dict)
 
     permissions = GenericRelation(ObjectPermission)
